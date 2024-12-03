@@ -1,0 +1,25 @@
+{
+  "nodes": [
+    { "id": "P" },
+    { "id": "Q" },
+    { "id": "R" },
+    { "id": "S" },
+    { "id": "T" },
+    { "id": "U" },
+    { "id": "V" }
+  ],
+  "edges": [
+    { "source": "P", "target": "Q", "weight": 5 },
+    { "source": "P", "target": "R", "weight": 2 },
+    { "source": "P", "target": "S", "weight": 8 },
+    { "source": "Q", "target": "R", "weight": 3 },
+    { "source": "Q", "target": "T", "weight": 6 },
+    { "source": "R", "target": "S", "weight": 1 },
+    { "source": "R", "target": "U", "weight": 4 },
+    { "source": "S", "target": "T", "weight": 7 },
+    { "source": "S", "target": "V", "weight": 5 },
+    { "source": "T", "target": "U", "weight": 3 },
+    { "source": "T", "target": "V", "weight": 2 },
+    { "source": "U", "target": "V", "weight": 6 }
+  ]
+}
