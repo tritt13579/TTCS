@@ -67,6 +67,14 @@ svg {
   transition: fill 0.3s;
 }
 
+.node.start {
+  fill: lightgreen !important;
+}
+
+.node.current {
+  fill: tomato !important;
+}
+
 .edge {
   stroke: black;
   stroke-width: 2px;

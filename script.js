@@ -1,4 +1,4 @@
-// Global variables to manage visualization state
+// Các biến toàn cục để quản lý trạng thái trực quan hóa
 let currentStep = 0;
 let dijkstraSteps = [];
 let graphData = null;
@@ -6,7 +6,7 @@ let startNodeSelect = null;
 let animationInterval = null;
 let startNode = null;
 
-// Initialize start node selection on page load
+// Khởi tạo lựa chọn đỉnh bắt đầu khi tải trang
 document.addEventListener("DOMContentLoaded", () => {
   startNodeSelect = document.createElement("select");
   startNodeSelect.id = "startNodeSelect";
@@ -14,18 +14,18 @@ document.addEventListener("DOMContentLoaded", () => {
     .querySelector(".controls")
     .insertBefore(startNodeSelect, document.getElementById("fileInput"));
 
-  // Add play button
+  // Thêm nút "Play"
   const playButton = document.createElement("button");
-  playButton.textContent = "Play Visualization";
+  playButton.textContent = "Play";
   playButton.id = "playVisualizationBtn";
   playButton.style.display = "none";
   startNodeSelect.after(playButton);
 });
 
-// Event listener for file input
+// Lắng nghe sự kiện thay đổi file
 document.getElementById("fileInput").addEventListener("change", handleFile);
 
-// Handle file upload and graph initialization
+// Xử lý việc tải file và khởi tạo đồ thị
 function handleFile(event) {
   const file = event.target.files[0];
   if (file) {
@@ -33,89 +33,37 @@ function handleFile(event) {
     reader.onload = (e) => {
       graphData = JSON.parse(e.target.result);
 
-      // Apply layout and draw initial graph
+      // Áp dụng bố cục và vẽ đồ thị ban đầu
       applyForceDirectedLayout(graphData);
       drawGraph(graphData);
 
-      // Populate start node selection
+      // Tạo danh sách lựa chọn đỉnh bắt đầu
       populateStartNodeSelect();
     };
     reader.readAsText(file);
   }
 }
 
-// Populate start node selection dropdown
+// Tạo danh sách lựa chọn đỉnh bắt đầu
 function populateStartNodeSelect() {
   const select = document.getElementById("startNodeSelect");
-  select.innerHTML = ""; // Clear previous options
+  select.innerHTML = ""; // Xóa các tùy chọn trước đó
 
-  // Add start node options
+  // Thêm các tùy chọn đỉnh bắt đầu
   graphData.nodes.forEach((node) => {
     const option = document.createElement("option");
     option.value = node.id;
-    option.textContent = `Start from ${node.id}`;
+    option.textContent = `Bắt đầu từ ${node.id}`;
     select.appendChild(option);
   });
 
-  // Show play visualization button
+  // Hiển thị nút chạy
   const playButton = document.getElementById("playVisualizationBtn");
   playButton.style.display = "inline-block";
   playButton.addEventListener("click", startAutomaticVisualization);
 }
 
-// Start automatic visualization
-function startAutomaticVisualization() {
-  startNode = document.getElementById("startNodeSelect").value;
-
-  // Prepare Dijkstra visualization
-  const graph = convertToAdjacencyList(graphData);
-  const dijkstraResult = dijkstra(graph, startNode);
-  dijkstraSteps = dijkstraResult.steps;
-  currentStep = 0;
-
-  // Reset visualization first
-  resetVisualization();
-
-  // Manually add the initial start node step
-  const startNodeDistanceElement = document.querySelector(
-    `text.distance[data-node="${startNode}"]`
-  );
-  startNodeDistanceElement.textContent = "0";
-  const startNodeElement = document.querySelector(
-    `circle[data-node="${startNode}"]`
-  );
-  startNodeElement.style.fill = "green";
-
-  // Start automatic step-by-step visualization
-  animationInterval = setInterval(visualizeNextStep, 2000);
-
-  // Disable play button during visualization
-  document.getElementById("playVisualizationBtn").disabled = true;
-}
-
-// Run Dijkstra visualization
-function runDijkstraVisualization() {
-  const startNode = document.getElementById("startNodeSelect").value;
-
-  // Prepare Dijkstra visualization
-  const graph = convertToAdjacencyList(graphData);
-  const dijkstraResult = dijkstra(graph, startNode);
-  dijkstraSteps = dijkstraResult.steps;
-  currentStep = 0;
-
-  // Show step controls
-  document.getElementById("stepControls").style.display = "block";
-
-  // Add event listeners for step controls
-  document
-    .getElementById("nextStepBtn")
-    .addEventListener("click", visualizeNextStep);
-  document
-    .getElementById("resetBtn")
-    .addEventListener("click", resetVisualization);
-}
-
-// Convert graph data to adjacency list format for Dijkstra
+// Chuyển đổi dữ liệu đồ thị sang dạng danh sách kề để sử dụng với thuật toán Dijkstra
 function convertToAdjacencyList(data) {
   const graph = {};
   data.nodes.forEach((node) => {
@@ -124,48 +72,80 @@ function convertToAdjacencyList(data) {
 
   data.edges.forEach((edge) => {
     graph[edge.source][edge.target] = edge.weight;
-    // If undirected graph, add reverse edge
+    // Nếu là đồ thị vô hướng, thêm cạnh ngược
     graph[edge.target][edge.source] = edge.weight;
   });
 
   return graph;
 }
 
-// Visualize next step of Dijkstra's algorithm
+// Bắt đầu trực quan hóa tự động
+function startAutomaticVisualization() {
+  startNode = document.getElementById("startNodeSelect").value;
+
+  // Chuẩn bị dữ liệu để trực quan hóa Dijkstra
+  const graph = convertToAdjacencyList(graphData);
+  const dijkstraResult = dijkstra(graph, startNode);
+  dijkstraSteps = dijkstraResult.steps;
+  currentStep = 0;
+
+  // Đặt lại trực quan hóa ban đầu
+  resetVisualization();
+
+  // Thêm bước ban đầu cho đỉnh bắt đầu
+  const startNodeDistanceElement = document.querySelector(
+    `text.distance[data-node="${startNode}"]`
+  );
+  startNodeDistanceElement.textContent = "0";
+  const startNodeElement = document.querySelector(
+    `circle[data-node="${startNode}"]`
+  );
+  startNodeElement.classList.add("start");
+  startNodeElement.style.fill = "lightgreen";
+
+  // Bắt đầu trực quan hóa từng bước tự động
+  animationInterval = setInterval(visualizeNextStep, 2000);
+
+  // Vô hiệu hóa nút "Play" trong khi đang trực quan hóa
+  document.getElementById("playVisualizationBtn").disabled = true;
+}
+
+// Trực quan hóa bước tiếp theo của thuật toán Dijkstra
 function visualizeNextStep() {
   if (currentStep >= dijkstraSteps.length) {
     clearInterval(animationInterval);
     document.getElementById("playVisualizationBtn").disabled = false;
-    alert("Algorithm visualization complete!");
+    alert("Hoàn thành trực quan hóa thuật toán!");
     return;
   }
 
-  // Reset all nodes and edges
+  // Đặt lại tất cả các đỉnh và cạnh
   resetNodeStyles();
 
   const currentStepData = dijkstraSteps[currentStep];
 
-  // Highlight current processing node in green
+  // Tô màu đỉnh đang xử lý hiện tại bằng màu đỏ
   const currentNodeElement = document.querySelector(
     `circle[data-node="${currentStepData.node}"]`
   );
-  currentNodeElement.style.fill = "green";
+  if (currentNodeElement) {
+    currentNodeElement.style.fill = "tomato";
+    currentNodeElement.classList.add("current"); // Đánh dấu đỉnh hiện tại
+  }
 
-  // Find all neighbors of the current node
+  // Tìm các đỉnh lân cận và tô màu
   const neighbors = findNeighbors(currentStepData.previous).filter(
     (neighborId) => neighborId !== startNode
-  ); // Exclude start node
+  );
 
-  // Highlight neighboring nodes in yellow and connecting edges in purple
   neighbors.forEach((neighborId) => {
     const neighborNodeElement = document.querySelector(
       `circle[data-node="${neighborId}"]`
     );
     if (neighborNodeElement) {
-      neighborNodeElement.style.fill = "yellow";
+      neighborNodeElement.style.fill = "gold";
     }
 
-    // Highlight connecting edges
     const edgeElement = document.querySelector(
       `line[data-source="${currentStepData.previous}"][data-target="${neighborId}"], line[data-source="${neighborId}"][data-target="${currentStepData.previous}"]`
     );
@@ -175,121 +155,68 @@ function visualizeNextStep() {
     }
   });
 
-  // Update distance text for the current node
+  // Cập nhật giá trị khoảng cách cho đỉnh hiện tại
   const distanceTextElement = document.querySelector(
     `text.distance[data-node="${currentStepData.node}"]`
   );
-  distanceTextElement.textContent =
-    currentStepData.distance === Infinity
-      ? "∞"
-      : currentStepData.distance.toFixed(2);
+  if (distanceTextElement) {
+    distanceTextElement.textContent =
+      currentStepData.distance === Infinity
+        ? "∞"
+        : currentStepData.distance.toFixed(2);
+  }
 
   currentStep++;
 }
 
-// Find neighbors of a node in the graph
-function findNeighbors(nodeId) {
-  return graphData.edges
-    .filter((edge) => edge.source === nodeId || edge.target === nodeId)
-    .map((edge) => (edge.source === nodeId ? edge.target : edge.source));
+// Đặt lại trực quan hóa
+function resetVisualization() {
+  currentStep = 0;
+  resetNodeStyles();
+
+  // Đặt lại văn bản hiển thị khoảng cách
+  document.querySelectorAll(".distance").forEach((distanceText) => {
+    distanceText.textContent = "∞";
+  });
 }
 
-// Reset node and edge styles
+// Đặt lại kiểu dáng của các đỉnh và cạnh
 function resetNodeStyles() {
+  // document.querySelectorAll(".node").forEach((node) => {
+  //   if (!node.classList.contains("current")) {
+  //     node.style.fill = "lightblue";
+  //   }
+  // });
   document.querySelectorAll(".node").forEach((node) => {
     node.style.fill = "lightblue";
   });
 
   document.querySelectorAll(".edge").forEach((edge) => {
     edge.style.stroke = "black";
-    edge.style.strokeWidth = "2px";
+    edge.style.strokeWidth = "3px";
   });
 }
 
-// Reset visualization
-function resetVisualization() {
-  currentStep = 0;
-  resetNodeStyles();
-
-  // Reset distance texts
-  document.querySelectorAll(".distance").forEach((distanceText) => {
-    distanceText.textContent = "∞";
-  });
+// Tìm các đỉnh lân cận của một đỉnh trong đồ thị
+function findNeighbors(nodeId) {
+  return graphData.edges
+    .filter((edge) => edge.source === nodeId || edge.target === nodeId)
+    .map((edge) => (edge.source === nodeId ? edge.target : edge.source));
 }
 
-// Apply force-directed layout (existing implementation)
-function applyForceDirectedLayout(data) {
-  const width = 800;
-  const height = 600;
-  const k = Math.sqrt((width * height) / data.nodes.length);
-  const iterations = 500;
-
-  // Initial random positions
-  data.nodes.forEach((node) => {
-    node.x = Math.random() * width;
-    node.y = Math.random() * height;
-  });
-
-  // Update positions based on forces
-  for (let iter = 0; iter < iterations; iter++) {
-    data.nodes.forEach((nodeA) => {
-      nodeA.vx = 0;
-      nodeA.vy = 0;
-      data.nodes.forEach((nodeB) => {
-        if (nodeA !== nodeB) {
-          const dx = nodeA.x - nodeB.x;
-          const dy = nodeA.y - nodeB.y;
-          const distance = Math.sqrt(dx * dx + dy * dy);
-          if (distance > 0) {
-            const force = (k * k) / distance;
-            nodeA.vx += (dx / distance) * force;
-            nodeA.vy += (dy / distance) * force;
-          }
-        }
-      });
-    });
-
-    // Attraction forces
-    data.edges.forEach((edge) => {
-      const source = data.nodes.find((node) => node.id === edge.source);
-      const target = data.nodes.find((node) => node.id === edge.target);
-      const dx = target.x - source.x;
-      const dy = target.y - source.y;
-      const distance = Math.sqrt(dx * dx + dy * dy);
-      const force = (distance * distance) / k;
-      const fx = (dx / distance) * force;
-      const fy = (dy / distance) * force;
-      source.vx += fx;
-      source.vy += fy;
-      target.vx -= fx;
-      target.vy -= fy;
-    });
-
-    // Update positions
-    data.nodes.forEach((node) => {
-      node.x += node.vx * 0.1;
-      node.y += node.vy * 0.1;
-
-      // Keep nodes within graph boundaries
-      node.x = Math.max(20, Math.min(width - 20, node.x));
-      node.y = Math.max(20, Math.min(height - 20, node.y));
-    });
-  }
-}
-
-// Draw graph on SVG
+// Vẽ đồ thị trên SVG
 function drawGraph(data) {
   const svg = document.getElementById("graphCanvas");
   const svgWidth = svg.clientWidth || 800;
   const svgHeight = svg.clientHeight || 600;
-  svg.innerHTML = ""; // Clear previous content
+  svg.innerHTML = ""; // Xóa nội dung trước đó
 
-  // Draw edges
+  // Vẽ các cạnh
   data.edges.forEach((edge) => {
     const source = data.nodes.find((node) => node.id === edge.source);
     const target = data.nodes.find((node) => node.id === edge.target);
 
-    // Draw line
+    // Vẽ đường thẳng
     const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
     line.setAttribute("x1", source.x);
     line.setAttribute("y1", source.y);
@@ -300,7 +227,7 @@ function drawGraph(data) {
     line.classList.add("edge");
     svg.appendChild(line);
 
-    // Draw weight text
+    // Vẽ trọng số của cạnh
     const weightText = document.createElementNS(
       "http://www.w3.org/2000/svg",
       "text"
@@ -324,9 +251,9 @@ function drawGraph(data) {
     svg.appendChild(weightText);
   });
 
-  // Draw nodes
+  // Vẽ các đỉnh
   data.nodes.forEach((node) => {
-    // Draw circle
+    // Vẽ hình tròn cho đỉnh
     const circle = document.createElementNS(
       "http://www.w3.org/2000/svg",
       "circle"
@@ -338,7 +265,7 @@ function drawGraph(data) {
     circle.classList.add("node");
     svg.appendChild(circle);
 
-    // Draw distance text
+    // Vẽ khoảng cách từ đỉnh
     const distanceText = document.createElementNS(
       "http://www.w3.org/2000/svg",
       "text"
@@ -351,7 +278,7 @@ function drawGraph(data) {
     distanceText.textContent = "∞";
     svg.appendChild(distanceText);
 
-    // Draw node label
+    // Vẽ nhãn cho đỉnh
     const labelText = document.createElementNS(
       "http://www.w3.org/2000/svg",
       "text"
@@ -380,24 +307,84 @@ function drawGraph(data) {
   });
 }
 
-// Dijkstra's algorithm implementation
+// Áp dụng bố cục dựa trên lực
+function applyForceDirectedLayout(data) {
+  const width = 800;
+  const height = 600;
+  const k = Math.sqrt((width * height) / data.nodes.length);
+  const iterations = 500;
+
+  // Gán vị trí ngẫu nhiên ban đầu
+  data.nodes.forEach((node) => {
+    node.x = Math.random() * width;
+    node.y = Math.random() * height;
+  });
+
+  // Cập nhật vị trí dựa trên các lực tác động
+  for (let iter = 0; iter < iterations; iter++) {
+    data.nodes.forEach((nodeA) => {
+      nodeA.vx = 0;
+      nodeA.vy = 0;
+      data.nodes.forEach((nodeB) => {
+        if (nodeA !== nodeB) {
+          const dx = nodeA.x - nodeB.x;
+          const dy = nodeA.y - nodeB.y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+          if (distance > 0) {
+            const force = (k * k) / distance;
+            nodeA.vx += (dx / distance) * force;
+            nodeA.vy += (dy / distance) * force;
+          }
+        }
+      });
+    });
+
+    // Lực hút giữa các đỉnh
+    data.edges.forEach((edge) => {
+      const source = data.nodes.find((node) => node.id === edge.source);
+      const target = data.nodes.find((node) => node.id === edge.target);
+      const dx = target.x - source.x;
+      const dy = target.y - source.y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+      const force = (distance * distance) / k;
+      const fx = (dx / distance) * force;
+      const fy = (dy / distance) * force;
+      source.vx += fx;
+      source.vy += fy;
+      target.vx -= fx;
+      target.vy -= fy;
+    });
+
+    // Cập nhật vị trí của các đỉnh
+    data.nodes.forEach((node) => {
+      node.x += node.vx * 0.1;
+      node.y += node.vy * 0.1;
+
+      // Đảm bảo các đỉnh nằm trong giới hạn đồ thị
+      node.x = Math.max(20, Math.min(width - 20, node.x));
+      node.y = Math.max(20, Math.min(height - 20, node.y));
+    });
+  }
+}
+
+// Triển khai thuật toán Dijkstra
 function dijkstra(graph, startNode) {
   const distances = {};
   const previousNodes = {};
   const unvisitedNodes = new Set();
 
-  // Initialize distances
+  // Khởi tạo khoảng cách
   for (const node in graph) {
     distances[node] = Infinity;
     previousNodes[node] = null;
     unvisitedNodes.add(node);
   }
-  distances[startNode] = 0; // Set start node distance to 0
+  distances[startNode] = 0; // Thiết lập khoảng cách từ nút bắt đầu là 0
 
-  const steps = []; // Store steps
+  const steps = []; // Lưu các bước thực hiện
 
   while (unvisitedNodes.size > 0) {
-    // Find nearest unvisited node
+    // Tìm nút gần nhất chưa được thăm
     let currentNode = null;
     for (const node of unvisitedNodes) {
       if (currentNode === null || distances[node] < distances[currentNode]) {
@@ -407,7 +394,7 @@ function dijkstra(graph, startNode) {
 
     if (currentNode === null || distances[currentNode] === Infinity) break;
 
-    // Update distances to neighboring nodes
+    // Cập nhật khoảng cách đến các nút lân cận
     const neighbors = Object.entries(graph[currentNode]);
     for (const [neighbor, weight] of neighbors) {
       if (unvisitedNodes.has(neighbor)) {
@@ -415,7 +402,7 @@ function dijkstra(graph, startNode) {
         if (newDist < distances[neighbor]) {
           distances[neighbor] = newDist;
           previousNodes[neighbor] = currentNode;
-          // Save current state
+          // Lưu trạng thái hiện tại
           steps.push({
             node: neighbor,
             distance: newDist,
@@ -425,7 +412,7 @@ function dijkstra(graph, startNode) {
       }
     }
 
-    // Mark node as visited
+    // Đánh dấu nút đã được thăm
     unvisitedNodes.delete(currentNode);
   }
 
